@@ -14,6 +14,9 @@
 #include <vector>
 #include <sstream>
 
+#define uint unsigned int
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 480
 #define USE_GPU_ENGINE 0
 extern "C"
 {
@@ -379,11 +382,102 @@ struct RenderObject
 
 	void bind()
 	{
-
+		//glDrawElements(GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, 0); // deprecated
 		glBindVertexArray(VAO);
-		//glDrawElements(GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, 0);
 		glDrawArrays(GL_TRIANGLES, 0, indicesSize);
 	}
+
+	void bind(GLenum render_mode)
+	{
+		glBindVertexArray(VAO);
+		glPolygonMode(GL_FRONT_AND_BACK, render_mode);
+		glDrawArrays(GL_TRIANGLES, 0, indicesSize);
+	}
+
+};
+
+struct PickingTexture
+{
+	GLuint framebuffer;
+	GLuint pickingTexture;
+	GLuint depthTexture;
+
+	struct PixelInfo
+	{
+		uint objectID = 0;
+		uint drawID = 0;
+		uint primID = 0;
+	};
+
+	bool initialise(int width, int height)
+	{
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		glGenTextures(1, &pickingTexture);
+		glBindTexture(GL_TEXTURE_2D, pickingTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_INT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pickingTexture, 0);
+
+		glGenTextures(1, &depthTexture);
+		glBindTexture(GL_TEXTURE_2D, depthTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		
+		if (status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "Error initialising framebuffer";
+			return false;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+		return true;
+	}
+
+	PixelInfo read_pixel(int x, int y)
+	{
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+		PixelInfo pixel;
+		GLuint data[3];
+		glReadPixels(x, y, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, data);
+
+		pixel.objectID = data[0];
+		pixel.drawID = data[1];
+		pixel.primID = data[2];
+
+		glReadBuffer(GL_NONE);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+
+		return pixel;
+	}
+
+	void enable_writing()
+	{
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+	}
+
+	void disable_writing()
+	{
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	}
+};
+
+struct MouseState
+{
+	bool isPressed = false;
+
+	double x = 0;
+	double y = 0;
 };
 
 int main(void)
@@ -396,7 +490,7 @@ int main(void)
 
 
 
-	GLFWwindow* window = window = glfwCreateWindow(640, 480, "TEST", NULL, NULL);
+	GLFWwindow* window = window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "TEST", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -427,12 +521,24 @@ int main(void)
 
 	//shader loading example
 	Shader shader;
+	Shader picking;
 	Shader outline;
 
 	shader.loadShaderProgramFromFile(RESOURCES_PATH "vertex.vert", RESOURCES_PATH "fragment.frag");
 	outline.loadShaderProgramFromFile(RESOURCES_PATH "vertex.vert", RESOURCES_PATH "color.frag");
+	picking.loadShaderProgramFromFile(RESOURCES_PATH "picking.vert", RESOURCES_PATH "picking.frag");
 
 	shader.bind();
+
+
+	PickingTexture picker;
+
+	picker.initialise(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	MouseState mouseState;
+
+	uint selected_object_id = 0;
+
 
 	float angle = 0.0f;
 
@@ -444,36 +550,95 @@ int main(void)
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glClearColor(0.1f, 0.3f, 0.7f, 1.0f);
 
+
+		glfwGetCursorPos(window, &mouseState.x, &mouseState.y);
+
+		if (glfwGetMouseButton(window, 0) == GLFW_PRESS)
+		{
+			mouseState.isPressed = true;
+		}
+		else
+		{
+			mouseState.isPressed = false;
+		}
+
+		//-------------------------------------------------
+		//---SHOULD REALLY MOVE SHADER SHIT ELSEWHERE------
+		//-------------------------------------------------
+
 		glm::mat4 projection = glm::mat4(1.0f);
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 model = glm::mat4(1.0f);
+		float scale = 1.0f;
 
-		int width = 0, height = 0;
-		glfwGetFramebufferSize(window, &width, &height);
-
-		glViewport(0, 0, width, height);
-
-		shader.bind();
-
-		model = glm::translate(model, glm::vec3(0, 0, 0));
+		model = glm::translate(model, glm::vec3(0, 0, -2));
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		projection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
 
 
-		float scale = 1.0f;
+		if (mouseState.isPressed)
+		{
+			int width = 0, height = 0;
+			glfwGetFramebufferSize(window, &width, &height);
+
+			glViewport(0, 0, width, height);
+
+			//shader.bind();
+
+			// ---- framebuffer test start
+
+			picker.enable_writing();
+
+			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT);
+
+			picking.bind();
+
+			glUniform1ui(picking.getUniform("objectIndex"), (uint)1);
+			glUniform1ui(picking.getUniform("drawIndex"), (uint)1);
+			glUniformMatrix4fv(picking.getUniform("projection"), 1, false, glm::value_ptr(projection));
+			glUniformMatrix4fv(picking.getUniform("view"), 1, false, glm::value_ptr(view));
+			glUniformMatrix4fv(picking.getUniform("model"), 1, false, glm::value_ptr(model));
+
+			glUniform1f(picking.getUniform("scale"), scale);
+
+
+			suzanne.bind();
+
+			picker.disable_writing();
+
+			// ---- framebuffer test end
+
+			PickingTexture::PixelInfo pixel = picker.read_pixel(mouseState.x, WINDOW_HEIGHT - mouseState.y - 1);
+
+			selected_object_id = pixel.objectID;
+
+		}
+
+		shader.bind();
+
+		texture.bind(); 
+
+		if (selected_object_id == 1) // object id should probably be something set inside the renderObject
+		{
+			glUniform1i(shader.getUniform("selected"), 1);
+		}
+		else
+		{
+			glUniform1i(shader.getUniform("selected"), 0);
+		}
 
 		glUniformMatrix4fv(shader.getUniform("projection"), 1, false, glm::value_ptr(projection));
 		glUniform1f(shader.getUniform("scale"), scale);
 		glUniformMatrix4fv(shader.getUniform("view"), 1, false, glm::value_ptr(view));
 		glUniformMatrix4fv(shader.getUniform("model"), 1, false, glm::value_ptr(model));
 
-		texture.bind();
 
-		GLint tex = shader.getUniform("tex0");
-
-		glUniform1i(tex, 0);
+		
+		GLint tex = shader.getUniform("tex0"); 
+		glUniform1i(tex, 0); 
 
 		if (angle > 360)
 		{
@@ -489,27 +654,29 @@ int main(void)
 
 		suzanne.bind();
 
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		/*glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00);
-		glDisable(GL_DEPTH_TEST);
-		outline.bind();
+		glDisable(GL_DEPTH_TEST);*/
+		//outline.bind();
 
-		scale = 1.25f;
+		/*scale = 1.25f;
 
 		glUniform1f(outline.getUniform("scale"), scale);
 		glUniformMatrix4fv(outline.getUniform("projection"), 1, false, glm::value_ptr(projection));
 		glUniformMatrix4fv(outline.getUniform("view"), 1, false, glm::value_ptr(view));
 		glUniformMatrix4fv(outline.getUniform("model"), 1, false, glm::value_ptr(model));
 
-		suzanne.bind();
+		suzanne.bind();*/
 
-		glStencilMask(0xFF);
+		/*glStencilMask(0xFF);
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_DEPTH_TEST);*/
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
 	}
 
 	return 0;
+
 }
