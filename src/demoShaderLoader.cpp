@@ -1,6 +1,5 @@
 #include <demoShaderLoader.h>
-#include <iostream>
-#include <fstream>
+#include <camera.h>
 
 //path is used for error reporting
 GLint createShaderFromData(const char *data, GLenum shaderType, const char *path = 0)
@@ -278,7 +277,7 @@ bool Shader::loadShaderProgramFromFile(const char *vertexShader, const char *geo
 	return true;
 }
 
-void Shader::bind()
+void Shader::bind() const
 {
 	glUseProgram(id);
 }
@@ -303,3 +302,18 @@ GLint getUniform(GLuint shaderId, const char *name)
 	}
 	return uniform;
 }
+
+void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera)
+{
+	shader.bind();
+
+	glm::mat4 model = glm::mat4(1.0f);
+
+	model = glm::translate(model, obj.position);
+
+	glUniformMatrix4fv(shader.getUniform("PVM"), 1, false, glm::value_ptr(camera.get_matrix() * model));
+	glUniform3f(shader.getUniform("modelPos"), obj.position.x, obj.position.y, obj.position.z);
+	glUniform1f(shader.getUniform("scale"), obj.scale);
+
+}
+

@@ -1,8 +1,15 @@
 #pragma once
+#pragma once
 #include <glad/glad.h>
+#include <renderObject.h>
+#include <iostream>
+#include <fstream>
 
-struct Shader
+extern class Camera;
+
+class Shader
 {
+public:
 	GLuint id = 0;
 
 	bool loadShaderProgramFromData(const char *vertexShaderData, const char *fragmentShaderData);
@@ -13,7 +20,7 @@ struct Shader
 	bool loadShaderProgramFromFile(const char *vertexShader,
 		const char *geometryShader, const char *fragmentShader);
 
-	void bind();
+	void bind() const;
 
 	void clear();
 
@@ -21,3 +28,6 @@ struct Shader
 };
 
 GLint getUniform(GLuint shaderId, const char *name);
+
+void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera);
+
