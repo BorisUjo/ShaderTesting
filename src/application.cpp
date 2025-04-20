@@ -1,13 +1,17 @@
 #include "application.h"
 
-Application::Application(int width, int height, const char* title) : renderer(window)
+Application::Application(int width, int height, const char* title)
 {
 	if (!initialise(width, height, title))
 	{
 		throw std::runtime_error("Failed to initialise Application");
 	}
 
+	scene.load_resources();
 	scene.set_camera_params(width, height);
+
+	renderer.init(window);
+	renderer.set_camera(scene.sceneCamera);
 
 }
 
@@ -18,6 +22,7 @@ Application::~Application()
 		glfwDestroyWindow(window);
 		window = nullptr;
 	}
+
 
 	glfwTerminate();
 }
@@ -42,6 +47,9 @@ void Application::run()
 
 bool Application::initialise(int width, int height, const char* title)
 {
+	if (!glfwInit())
+		return false;
+
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
 	window = glfwCreateWindow(width, height, title, NULL, NULL);

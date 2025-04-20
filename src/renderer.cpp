@@ -1,7 +1,18 @@
+#define GLFW_INCLUDE_NONE
+#define GLM_ENABLE_EXPERIMENTAL
 #include <renderer.h>
-Renderer::Renderer(GLFWwindow* window)
+#include <camera.h>
+#include <openglDebug.h>
+Renderer::Renderer()
 {
+}
 
+Renderer::~Renderer()
+{
+}
+
+void Renderer::init(GLFWwindow* window)
+{
 	this->window = window;
 
 	glEnable(GL_DEBUG_OUTPUT);
@@ -9,11 +20,6 @@ Renderer::Renderer(GLFWwindow* window)
 	glEnable(GL_DEPTH_TEST);
 	glDebugMessageCallback(glDebugOutput, 0);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-}
-
-Renderer::~Renderer()
-{
-
 }
 
 void Renderer::render(Scene& scene)
@@ -26,7 +32,13 @@ void Renderer::render(Scene& scene)
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	camera->input(window);
 	scene.render_map();
 
 
+}
+
+void Renderer::set_camera(Camera* camera)
+{
+	this->camera = camera;
 }

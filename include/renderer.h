@@ -6,12 +6,14 @@
 class Renderer
 {
 public:
-	Renderer(GLFWwindow* window);
+	Renderer();
 	~Renderer();
 
+	void init(GLFWwindow* window);
 	void render(Scene& scene);
+	void set_camera(Camera* camera);
 
 private:
-	GLFWwindow* window;
-
+	GLFWwindow* window = nullptr;
+	Camera* camera = nullptr;
 };

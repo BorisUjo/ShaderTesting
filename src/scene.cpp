@@ -2,15 +2,7 @@
 #include <camera.h>
 Scene::Scene()
 {
-	if (!load_resources())
-	{
-		throw std::runtime_error("Scene: Failed to load resources");
-	}
 	
-	sceneCamera = new Camera(width, height);
-
-	std::cout << "Scene Loaded Succesfully" << std::endl;
-
 }
 
 Scene::~Scene()
@@ -29,6 +21,9 @@ void Scene::set_camera_params(float width, float height)
 {
 	this->width = width;
 	this->height = height;
+
+	sceneCamera = new Camera(width, height);
+
 }
 
 bool Scene::load_resources()
@@ -46,6 +41,9 @@ bool Scene::load_resources()
 	initialise_platform(mapTiles, tileData);
 
 	defaultShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/vertex.vert", RESOURCES_PATH "shaders/fragment.frag");
+
+	std::cout << "Scene Loaded Succesfully" << std::endl;
+
 
 	return true;
 }

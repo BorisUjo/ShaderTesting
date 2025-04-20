@@ -10,12 +10,13 @@ public:
 	~Scene();
 	void render_map();
 	void set_camera_params(float width, float height);
+	bool load_resources();
 
 private:
-	bool load_resources();
 	void initialise_platform(RenderObject* objects, MeshData& data);
-private:
+public:
 	Camera* sceneCamera;
+private:
 
 	RenderObject mapTiles[64];
 	RenderObject mapMesh;

@@ -95,7 +95,7 @@ void RenderObject::initialise(MeshData& mesh)
 void RenderObject::bind()
 {
 	glBindVertexArray(vaoID);
-	glDrawArrays(GL_TRIANGLES, 0, 50);
+	glDrawArrays(GL_TRIANGLES, 0, meshIndicesSize);
 }
 
 void RenderObject::bind(GLenum render_mode)

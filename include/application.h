@@ -12,9 +12,9 @@ public:
 	void run();
 
 private:
-	GLFWwindow* window;
-	Renderer renderer;
+	GLFWwindow* window = nullptr;
 	Scene scene;
+	Renderer renderer;
 
 	bool initialise(int width, int height, const char* title);
 	void process_input(float deltaTime);

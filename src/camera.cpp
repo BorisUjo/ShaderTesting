@@ -126,7 +126,6 @@ glm::mat4 Camera::get_PV_static()
 {
 	projection = glm::mat4(1.0f);
 	view = glm::mat4(1.0f);
-
 	projection = glm::perspective(glm::radians(FOV), window_width / window_height, nearPlane, farPlane);
 	view = glm::translate(view, cameraPosition);
 	return projection * view;
