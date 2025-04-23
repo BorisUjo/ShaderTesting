@@ -44,6 +44,29 @@ void Camera::input(GLFWwindow* window)
 		Position.y += speed;
 	}
 
+	// DEBUG TOOL ------------------------------------------------------------------>
+	int currentKey = glfwGetKey(window, GLFW_KEY_F);
+	if (currentKey == GLFW_PRESS && previousKey != GLFW_PRESS)
+	{
+		interactMode = !interactMode;
+	}
+	previousKey = currentKey;
+
+	// DEBUG TOOL ------------------------------------------------------------------>
+
+
+	if (interactMode)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		{
+			selectedObjectID = pixelInfo.objectID;
+		}
+
+		return;
+	}
+
 
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)

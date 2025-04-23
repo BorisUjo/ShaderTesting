@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <openglDebug.h>
 #include <GLFW/glfw3.h>
+#include <pickingTexture.h>
 class Renderer
 {
 public:
@@ -16,4 +17,5 @@ public:
 private:
 	GLFWwindow* window = nullptr;
 	Camera* camera = nullptr;
+	PickingTexture picker;
 };

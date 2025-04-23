@@ -8,6 +8,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtx/vector_angle.hpp"
 #include <demoShaderLoader.h>
+#include <pickingTexture.h>
 
 class Camera
 {
@@ -22,6 +23,12 @@ public:
 
 	glm::vec3 cameraPosition = glm::vec3(0.0f,-0.0f,-5.0f); 
 
+	PickingTexture::PixelInfo pixelInfo;
+	
+	int selectedObjectID = -1;
+
+
+
 private:
 	float FOV = 45.0f;
 	float nearPlane = 0.1f;
@@ -34,7 +41,8 @@ private:
 	float sensitivity = 100.0f;
 
 	bool firstClick = true;
-	
+	bool interactMode = false;
+	int previousKey = GLFW_RELEASE;
 public:
 
 	Camera(float width, float height) : window_width(width), window_height(height)

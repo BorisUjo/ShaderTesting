@@ -20,6 +20,12 @@ void Renderer::init(GLFWwindow* window)
 	glEnable(GL_DEPTH_TEST);
 	glDebugMessageCallback(glDebugOutput, 0);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+	int w, h;
+
+	glfwGetFramebufferSize(window, &w, &h);
+	picker.initialise(w, h);
+
 }
 
 void Renderer::render(Scene& scene)
@@ -33,6 +39,21 @@ void Renderer::render(Scene& scene)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	camera->input(window);
+
+	picker.enable_writing();
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	scene.picking_phase_render_map();
+
+	picker.disable_writing();
+
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+
+	camera->pixelInfo = picker.read_pixel(x, height - y - 1);
+	
+
 	scene.render_map();
 
 

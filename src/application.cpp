@@ -1,5 +1,7 @@
 #include "application.h"
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 Application::Application(int width, int height, const char* title)
 {
 	if (!initialise(width, height, title))
@@ -37,7 +39,7 @@ void Application::run()
 		float currentFrame = glfwGetTime();
 		float deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		
+		scene.debug_input(window);
 		renderer.render(scene);
 
 		glfwSwapBuffers(window);
@@ -63,10 +65,20 @@ bool Application::initialise(int width, int height, const char* title)
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	glfwSwapInterval(1);
 
+	glfwSetKeyCallback(window, key_callback);
+
 	return true;
 }
 
 void Application::process_input(float deltaTime)
 {
 
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, 1);
+	}
 }

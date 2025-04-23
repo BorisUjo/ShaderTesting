@@ -30,4 +30,5 @@ public:
 GLint getUniform(GLuint shaderId, const char *name);
 
 void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera);
+void parse_picking_shader_info(Shader& shader, RenderObject& obj, Camera& camera);
 

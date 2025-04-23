@@ -1,6 +1,6 @@
 #include <demoShaderLoader.h>
 #include <camera.h>
-
+#include <pickingTexture.h>
 //path is used for error reporting
 GLint createShaderFromData(const char *data, GLenum shaderType, const char *path = 0)
 {
@@ -307,6 +307,11 @@ void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera)
 {
 	shader.bind();
 
+	if (camera.selectedObjectID == obj.objectID)
+	{
+		//std::cout << "SELECTED OBJ: " << obj.objectID << std::endl;
+	}
+
 	glm::mat4 model = glm::mat4(1.0f);
 
 	model = glm::translate(model, obj.position);
@@ -315,5 +320,21 @@ void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera)
 	glUniform3f(shader.getUniform("modelPos"), obj.position.x, obj.position.y, obj.position.z);
 	glUniform1f(shader.getUniform("scale"), obj.scale);
 
+}
+
+void parse_picking_shader_info(Shader& shader, RenderObject& obj, Camera& camera)
+{
+	shader.bind();
+
+	glm::mat4 model = glm::mat4(1.0f);
+
+	model = glm::translate(model, obj.position);
+
+	glUniformMatrix4fv(shader.getUniform("PVM"), 1, false, glm::value_ptr(camera.get_matrix() * model));
+	glUniform3f(shader.getUniform("modelPos"), obj.position.x, obj.position.y, obj.position.z);
+	glUniform1f(shader.getUniform("scale"), obj.scale);
+
+	glUniform1ui(shader.getUniform("objectIndex"), obj.objectID);
+	glUniform1ui(shader.getUniform("drawIndex"), obj.objectID);
 }
 

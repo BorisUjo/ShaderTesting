@@ -66,7 +66,7 @@ void RenderObject::test_initialise()
 
 }
 
-void RenderObject::initialise(MeshData& mesh)
+void RenderObject::initialise(MeshData& mesh, int& ro_counter)
 {
 	GLuint vbo;
 	GLuint ebo;
@@ -89,6 +89,9 @@ void RenderObject::initialise(MeshData& mesh)
 	meshIndicesSize = mesh.indicesSize;
 
 	glBindVertexArray(0);
+
+	ro_counter++;
+	objectID = ro_counter;
 
 }
 
