@@ -2,6 +2,14 @@
 
 void Camera::input(GLFWwindow* window)
 {
+
+	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+	{
+		std::cout << Position.x << std::endl;
+		std::cout << Position.y << std::endl;
+		std::cout << Position.z << std::endl;
+	}
+
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		Position += speed * Orientation;

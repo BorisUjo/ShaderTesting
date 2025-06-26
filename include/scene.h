@@ -5,6 +5,9 @@
 #include <renderObject.h>
 #include <tile.h>
 #include <GLFW/glfw3.h>
+#include <gameManager.h>
+#include <texture.h>
+#include <gameStateManager.h>
 class Scene
 {
 public:
@@ -12,23 +15,31 @@ public:
 	~Scene();
 	void render_map(); // default framebuffer
 	void picking_phase_render_map();
-	void set_camera_params(float width, float height);
-	bool load_resources();
+	void initialise_camera(float width, float height);
 	void debug_input(GLFWwindow* window);
+	void update();
+	bool load_resources();
+
+	void spawn_debug_unit();
 
 private:
-	void initialise_map(RenderObject* objects, MeshData& data);
+	void initialise_map(MeshData& tileMesh, Shader* shader);
 public:
 	Camera* sceneCamera;
 private:
 
 	int RENDER_OBJECT_COUNTER = 0;
 
-	RenderObject mapTiles[64];
+	
+	GameStateManager gameStateManager;
 	RenderObject mapMesh;
 
 	Shader defaultShader;
 	Shader pickingShader;
+
+	Texture tileTexture;
+
+	int previous_key;
 
 	float width = 0.0f;
 	float height = 0.0f;

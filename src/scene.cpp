@@ -16,11 +16,22 @@ void Scene::render_map()
 	parse_shader_info(defaultShader, mapMesh, *sceneCamera);
 	mapMesh.bind();
 
-	for (int i = 0; i < 64; i++)
+	GameObject* ptr = nullptr;
+	size_t size;
+	auto& gameManager = GameManager::getInstance();
+	gameManager.getGameObjects(&ptr, size);
+
+	if (ptr == nullptr)
 	{
-		parse_shader_info(defaultShader, mapTiles[i], *sceneCamera);
-		mapTiles[i].bind();
+		return;
 	}
+
+	for (size_t i = 0; i < size; i++)
+	{
+		(ptr + i)->parseShader();
+		(ptr + i)->mesh.bind();
+	}
+
 }
 
 void Scene::picking_phase_render_map()
@@ -28,21 +39,31 @@ void Scene::picking_phase_render_map()
 	pickingShader.bind();
 	parse_picking_shader_info(pickingShader, mapMesh, *sceneCamera);
 	mapMesh.bind();
+	GameObject* ptr = nullptr;
+	size_t size;
+	auto& gameManager = GameManager::getInstance();
+	gameManager.getGameObjects(&ptr, size);
 
-	for (int i = 0; i < 64; i++)
+	if (ptr == nullptr)
 	{
-		parse_picking_shader_info(pickingShader, mapTiles[i], *sceneCamera);
-		mapTiles[i].bind();
+		return;
+	}
+
+	for (size_t i = 0; i < size; i++)
+	{
+		(ptr + i)->parsePickingShader(pickingShader);
+		(ptr + i)->mesh.bind();
 	}
 }
 
-void Scene::set_camera_params(float width, float height)
+void Scene::initialise_camera(float width, float height)
 {
 	this->width = width;
 	this->height = height;
 
 	sceneCamera = new Camera(width, height);
-
+	auto& gameManager = GameManager::getInstance();
+	gameManager.setMainCamera(sceneCamera);
 }
 
 bool Scene::load_resources()
@@ -56,24 +77,52 @@ bool Scene::load_resources()
 	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/ROMAN_BATTLEFIELD.obj", mapData);
 	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/Pillar.obj", tileData);
 
-	mapMesh.initialise(mapData, RENDER_OBJECT_COUNTER);
-	initialise_map(mapTiles, tileData);
-
 	defaultShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/vertex.vert", RESOURCES_PATH "shaders/fragment.frag");
 	pickingShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/pickingVertex.vert", RESOURCES_PATH "shaders/pickingFragment.frag");
 
+	tileTexture.initialise(RESOURCES_PATH "textures/test.png");
+
+	mapMesh.initialise(mapData);
+
+
+	initialise_map(tileData, &defaultShader);
+
 	std::cout << "Scene Loaded Succesfully" << std::endl;
 
+	std::cout << "Render objects count:" << GameManager::getInstance().getRenderObjectCount() << std::endl;
 
 	return true;
 }
 
 void Scene::debug_input(GLFWwindow* window)
 {
+	int currentKey = glfwGetKey(window, GLFW_KEY_G);
+	if (currentKey == GLFW_PRESS && previous_key != GLFW_PRESS)
+	{
+		std::cout << "Pressed" << std::endl;
+	}
+
+	previous_key = currentKey;
+
+}
+
+void Scene::update()
+{
+	// Update and call functions from current Game phase
+	// tick rate
+
+
+	gameStateManager.tick();
+
+
+}
+
+void Scene::spawn_debug_unit()
+{
 	
 }
 
-void Scene::initialise_map(RenderObject* objects, MeshData& data)
+void Scene::initialise_map(MeshData& tileMesh, Shader* shader)
 {
 	unsigned int objCounter = 0;
 
@@ -83,23 +132,20 @@ void Scene::initialise_map(RenderObject* objects, MeshData& data)
 	float X_STEP = 0.85f;
 	float Y_STEP = 0.75f;
 
+	auto& gameManager = GameManager::getInstance();
+
 	for (int y = 0; y < 8; y++)
 	{
 		for (int x = 0; x < 8; x++)
 		{
-			objects[objCounter].initialise(data, RENDER_OBJECT_COUNTER);
-			objects[objCounter].position = glm::vec3((x * X_STEP) + X_OFFSET, 0, (-y * Y_STEP) + Y_OFFSET);
-			objects[objCounter].scale = 0.8f;
 
-			// tile logic
+			GameObject& go = gameManager.instantiate();
 
-			tiles[objCounter].xPos = x;
-			tiles[objCounter].yPos = y;
-			tiles[objCounter].tilePosition = &(objects[objCounter].position);
-
-
-			objCounter++;
+			go.mesh.initialise(tileMesh);
+			go.shader = shader;
+			go.mesh.position = glm::vec3((x * X_STEP) + X_OFFSET, 0, (-y * Y_STEP) + Y_OFFSET);
+			go.mesh.scale = 0.8f;
+			go.mesh.assign_texture(tileTexture);
 		}
 	}
-
 }

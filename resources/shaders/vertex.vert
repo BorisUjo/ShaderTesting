@@ -9,13 +9,11 @@ uniform mat4 PVM;
 uniform float scale;
 uniform vec3 modelPos;
 
-out vec2 col;
-out vec2 texCoords;
+out vec2 texCoord;
 
 void main()
 {
 	gl_Position = PVM * vec4(modelPos + (aPos * scale), 1);
-	texCoords = aTex;
-	col = texCoords;
+	texCoord = aTex;
 
 }

@@ -9,7 +9,6 @@
 #include "glm/gtx/vector_angle.hpp"
 #include <demoShaderLoader.h>
 #include <pickingTexture.h>
-
 class Camera
 {
 public:

@@ -1,6 +1,6 @@
 #include <demoShaderLoader.h>
-#include <camera.h>
 #include <pickingTexture.h>
+#include <camera.h>
 //path is used for error reporting
 GLint createShaderFromData(const char *data, GLenum shaderType, const char *path = 0)
 {
@@ -307,7 +307,7 @@ void parse_shader_info(Shader& shader, RenderObject& obj, Camera& camera)
 {
 	shader.bind();
 
-	if (camera.selectedObjectID == obj.objectID)
+	if (camera.selectedObjectID == obj.meshID)
 	{
 		//std::cout << "SELECTED OBJ: " << obj.objectID << std::endl;
 	}
@@ -334,7 +334,7 @@ void parse_picking_shader_info(Shader& shader, RenderObject& obj, Camera& camera
 	glUniform3f(shader.getUniform("modelPos"), obj.position.x, obj.position.y, obj.position.z);
 	glUniform1f(shader.getUniform("scale"), obj.scale);
 
-	glUniform1ui(shader.getUniform("objectIndex"), obj.objectID);
-	glUniform1ui(shader.getUniform("drawIndex"), obj.objectID);
+	glUniform1ui(shader.getUniform("objectIndex"), obj.meshID);
+	glUniform1ui(shader.getUniform("drawIndex"), obj.meshID);
 }
 

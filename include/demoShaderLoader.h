@@ -4,7 +4,6 @@
 #include <renderObject.h>
 #include <iostream>
 #include <fstream>
-
 extern class Camera;
 
 class Shader

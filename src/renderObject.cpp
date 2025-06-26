@@ -1,5 +1,5 @@
 #include <renderObject.h>
-
+#include <gameManager.h>
 void RenderObject::test_initialise()
 {
 	float rect_verts[] = {
@@ -66,7 +66,7 @@ void RenderObject::test_initialise()
 
 }
 
-void RenderObject::initialise(MeshData& mesh, int& ro_counter)
+void RenderObject::initialise(MeshData& mesh)
 {
 	GLuint vbo;
 	GLuint ebo;
@@ -90,8 +90,8 @@ void RenderObject::initialise(MeshData& mesh, int& ro_counter)
 
 	glBindVertexArray(0);
 
-	ro_counter++;
-	objectID = ro_counter;
+	meshID = GameManager::getInstance().getRenderObjectCount();
+	GameManager::getInstance().countRenderObject();
 
 }
 
@@ -106,4 +106,20 @@ void RenderObject::bind(GLenum render_mode)
 	glBindVertexArray(vaoID);
 	glPolygonMode(GL_FRONT_AND_BACK, render_mode);
 	glDrawArrays(GL_TRIANGLES, 0, meshIndicesSize);
+}
+
+void RenderObject::assign_texture(const GLuint id)
+{
+	textureID = id;
+}
+
+void RenderObject::assign_texture(const Texture& texture)
+{
+	textureID = texture.textureID;
+}
+
+void RenderObject::bind_texture()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureID);
 }

@@ -40,6 +40,8 @@ void Renderer::render(Scene& scene)
 
 	camera->input(window);
 
+	// picking phase
+
 	picker.enable_writing();
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -48,12 +50,14 @@ void Renderer::render(Scene& scene)
 
 	picker.disable_writing();
 
+	// render normally 
+
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 
 	camera->pixelInfo = picker.read_pixel(x, height - y - 1);
-	
 
+	
 	scene.render_map();
 
 
