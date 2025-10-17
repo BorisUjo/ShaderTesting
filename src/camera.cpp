@@ -1,15 +1,30 @@
 #include <camera.h>
-
-void Camera::input(GLFWwindow* window)
+#include <gameManager.h>
+#define BACKGROUND_PIXELINFO 1036831949
+GameObject* Camera::get_selected_object()
 {
 
-	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+	selectedObjectID = pixelInfo.objectID;
+
+	if (selectedObjectID == BACKGROUND_PIXELINFO)
 	{
-		std::cout << Position.x << std::endl;
-		std::cout << Position.y << std::endl;
-		std::cout << Position.z << std::endl;
+		return nullptr;
 	}
 
+	auto& gameManager = GameManager::getInstance();
+	auto* selectedObject = &gameManager.grabFromID(selectedObjectID);
+
+	if (selectedObject == nullptr)
+	{
+		return nullptr;
+	}
+
+	previousSelectedID = selectedObjectID;
+
+	return selectedObject;
+}
+void Camera::free_move(GLFWwindow* window)
+{
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		Position += speed * Orientation;
@@ -50,29 +65,6 @@ void Camera::input(GLFWwindow* window)
 	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 	{
 		Position.y += speed;
-	}
-
-	// DEBUG TOOL ------------------------------------------------------------------>
-	int currentKey = glfwGetKey(window, GLFW_KEY_F);
-	if (currentKey == GLFW_PRESS && previousKey != GLFW_PRESS)
-	{
-		interactMode = !interactMode;
-	}
-	previousKey = currentKey;
-
-	// DEBUG TOOL ------------------------------------------------------------------>
-
-
-	if (interactMode)
-	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		{
-			selectedObjectID = pixelInfo.objectID;
-		}
-
-		return;
 	}
 
 
@@ -126,6 +118,42 @@ void Camera::input(GLFWwindow* window)
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
 	}
+
+}
+
+void Camera::input(GLFWwindow* window)
+{
+	if (interactMode)
+	{
+		free_move(window);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS)
+	{
+		std::cout << "Camera Pos:" << '\n';
+		std::cout << Position.x << '\n';
+		std::cout << Position.y << '\n';
+		std::cout << Position.z << '\n';
+	}
+
+	// DEBUG TOOL ------------------------------------------------------------------>
+	int currentKey = glfwGetKey(window, GLFW_KEY_F);
+	if (currentKey == GLFW_PRESS && previousKey != GLFW_PRESS)
+	{
+		interactMode = !interactMode;
+	}
+	previousKey = currentKey;
+
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+
+	}
+
+
+	return;
 }
 
 void Camera::matrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader, const char* uniform)

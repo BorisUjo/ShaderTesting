@@ -9,6 +9,7 @@
 #include "glm/gtx/vector_angle.hpp"
 #include <demoShaderLoader.h>
 #include <pickingTexture.h>
+#include <gameObject.h>
 class Camera
 {
 public:
@@ -25,6 +26,7 @@ public:
 	PickingTexture::PixelInfo pixelInfo;
 	
 	int selectedObjectID = -1;
+	int previousSelectedID = -2;
 
 
 
@@ -39,24 +41,38 @@ private:
 	float speed = 0.075f;
 	float sensitivity = 100.0f;
 
+
+	bool mouseDragging = false;
 	bool firstClick = true;
 	bool interactMode = false;
 	int previousKey = GLFW_RELEASE;
+
+public:
+	double cursorPosX = 0.0;
+	double cursorPosY = 0.0;
+
 public:
 
 	Camera(float width, float height) : window_width(width), window_height(height)
 	{
-		
+		Position = glm::vec3(12.981f, 30.3077f, 29.4453f);
+		Orientation = glm::vec3(0.0f, -0.60481f, -0.795468f);
 	}
 
+	
+	GameObject* get_selected_object();
+	void free_move(GLFWwindow* window);
 	void input(GLFWwindow* window);
 	void matrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader, const char* uniform);
 	glm::mat4 get_matrix();
 
 	glm::mat4 get_PV_static();
 
+	inline void setCursorPos(GLFWwindow* window)
+	{
+		glfwGetCursorPos(window, &cursorPosX, &cursorPosY);
+	}
+	template<typename T, typename Base>
+	T* get_gameObject(Base* base);
 
 };
-
-
-

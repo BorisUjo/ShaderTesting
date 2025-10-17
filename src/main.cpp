@@ -20,7 +20,10 @@ extern "C"
 
 int main(void)
 {
-	Application app(640,480, "TEST");
+	int factor = 10;
+	int width = 840 + (840/factor);
+	int height = 680 + (680 / factor);
+	Application app(width,height, "TEST");
 
 	app.run();
 

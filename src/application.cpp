@@ -1,10 +1,8 @@
 #include "application.h"
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void press_B()
-{
-	std::cout << "Pressed B" << std::endl;
-}
 
 Application::Application(int width, int height, const char* title)
 {
@@ -13,13 +11,24 @@ Application::Application(int width, int height, const char* title)
 		throw std::runtime_error("Failed to initialise Application");
 	}
 
-	scene.load_resources();
+	scene.initialise();
 	scene.initialise_camera(width, height);
 
 	renderer.init(window);
 	renderer.set_camera(scene.sceneCamera);
 
 	inputManager.bindKey(GLFW_KEY_B, std::bind(&Scene::spawn_debug_unit, &scene));
+	inputManager.bindKey(GLFW_KEY_R, std::bind(&Scene::write_to_json, &scene));
+	inputManager.bindKey(GLFW_KEY_X, std::bind(&Scene::debug_switch_game_state, &scene));
+	inputManager.bindKey(KeyCode(GLFW_KEY_T, std::bind(&Scene::debug_switch_game_state, &scene)));
+
+	inputManager.bindMouseKey(KeyCode(GLFW_MOUSE_BUTTON_1, std::bind(&Scene::mouse_left_click, &scene), SINGLE_PRESS));
+	inputManager.bindMouseKey(KeyCode(GLFW_MOUSE_BUTTON_2, std::bind(&Scene::mouse_right_click, &scene), SINGLE_PRESS));
+
+	//TO DO: expand input manager to support single user input
+	// bind key -> 1. argument Keybind(KEY, CLICK_STATE), 2. argument function
+
+
 
 }
 
@@ -43,6 +52,10 @@ void Application::run()
 
 	auto& gameManager = GameManager::getInstance();
 
+	ImGuiIO io;;
+
+	renderer.init_imgui(window, io);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = glfwGetTime();
@@ -50,12 +63,20 @@ void Application::run()
 		lastFrame = currentFrame;
 
 		inputManager.handleInput(window);
+		inputManager.handleMouseInput(window);
+
 		// TODO: input manager here
 
 		gameManager.setDeltaTime(deltaTime);
 
 		renderer.render(scene);
 		scene.update();
+
+		//renderer.render_ui(io);
+		scene.render_imgui();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

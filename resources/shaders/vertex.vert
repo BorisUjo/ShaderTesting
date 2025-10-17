@@ -6,14 +6,10 @@ layout (location = 2) in vec2 aTex;
 
 uniform mat4 PVM;
 
-uniform float scale;
-uniform vec3 modelPos;
-
 out vec2 texCoord;
 
 void main()
 {
-	gl_Position = PVM * vec4(modelPos + (aPos * scale), 1);
-	texCoord = aTex;
-
+    gl_Position = PVM * vec4(aPos, 1.0);
+    texCoord = aTex;
 }

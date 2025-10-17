@@ -1,0 +1,20 @@
+[
+  {
+    "ID": "TEST_DUMMY",
+    "attackDamage": 100,
+    "attackShield": 100,
+    "health": 10000,
+    "magicDamage": 100,
+    "magicShield": 100,
+    "name": "Test Dummy"
+  },
+  {
+    "ID": "TEST_DUMMY",
+    "attackDamage": 1,
+    "attackShield": 1,
+    "health": 100,
+    "magicDamage": 1,
+    "magicShield": 1,
+    "name": "Scuttle Bug"
+  }
+]

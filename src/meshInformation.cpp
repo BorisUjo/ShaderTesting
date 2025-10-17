@@ -126,11 +126,17 @@ void loadModelFromFile(const std::streamsize buffer_size, const char* file_path,
 
 	auto end_time = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> duration = end_time - start_time;
-	std::cout << "[ Model Load Finished ]" << std::endl;
+	std::cout << "[ Model Load Finished ] : "  << file_path << std::endl;
 	std::cout << "Elapsed time " << duration.count() << "s" << std::endl;
 	std::cout << "Vertex Count: " << result.vertices.size() << std::endl;
 
 	
 
+}
+
+void loadModelFromFile(const char* file_path, MeshData& result)
+{
+    const std::streamsize MODEL_LOAD_BUFFER_SIZE = 65536;
+    loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, file_path ,result);
 }
 

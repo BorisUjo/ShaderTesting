@@ -38,3 +38,4 @@ struct MeshData
 };
 
 void loadModelFromFile(const std::streamsize buffer_size, const char* file_path, MeshData& result); 
+void loadModelFromFile(const char* file_path, MeshData& result); 
