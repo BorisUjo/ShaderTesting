@@ -21,7 +21,8 @@ extern "C"
 int main(void)
 {
 	int factor = 10;
-	int width = 840 + (840/factor);
+	//int width = 840 + (840/factor);
+	int width = 1080 + (840/factor);
 	int height = 680 + (680 / factor);
 	Application app(width,height, "TEST");
 

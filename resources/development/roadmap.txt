@@ -1,0 +1,7 @@
+Prosinac 2025 - TFT Game
+
+-> Postavi pool za rezerve (5 mjesta) [MODEL] [CODE]
+-> Simuliraj 8-player combat:
+   - nasumice odaberi 8 playera za combat [CODE]
+-> Shopping sustav [CODE]
+-> Player Inventory

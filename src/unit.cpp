@@ -12,6 +12,7 @@ void Unit::cast_ultimate()
 Unit::Unit(UnitData data)
 {
 	m_baseData = data;
+	battleData = data;
 
 	auto& gameManager = GameManager::getInstance();
 
@@ -25,9 +26,10 @@ Unit::Unit(UnitData data)
 	//m_controller = dynamic_cast<UnitController&>(go);
 }
 
-Unit::Unit(UnitData data, Shader* shader, Texture* texture)
+Unit::Unit(const UnitData data, Shader* shader, Texture* texture)
 {
-	m_baseData = data;
+	m_baseData = UnitData(data);
+	battleData = UnitData(data);
 
 	auto& gameManager = GameManager::getInstance();
 
@@ -45,7 +47,9 @@ Unit::Unit(UnitData data, Shader* shader, Texture* texture)
 	go.highlightShader = gameManager.getHighlightShader();
 	go.texture = texture; 
 	go.mesh.textureID = texture->textureID;
+	gameManager.subscribeTick(std::bind(&UnitController::tick, &go));
 	m_controller = &go;
+	m_controller->tick_init();
 
 
 }
@@ -57,7 +61,8 @@ Unit::~Unit()
 
 void Unit::init_controller()
 {
-	m_controller->initialise_unit(this);
+	m_controller->unit = this;
+	//m_controller->initialise_unit(this);
 }
 
 void Unit::set_reserve_status(bool status)
@@ -107,8 +112,8 @@ int Unit::get_move_range()
 
 void Unit::refresh_stats()
 {
-	m_battleData.attackDamage = get_attack_damage();
-	m_battleData.health = get_health();
+	battleData.attackDamage = get_attack_damage();
+	battleData.health = get_health();
 
 }
 void Unit::move_to_reserve(ReserveTile& tile)
@@ -117,6 +122,33 @@ void Unit::move_to_reserve(ReserveTile& tile)
 	glm::vec3 pos = tile.mesh.position;
 	pos.y = 1;
 	m_controller->move_unit(pos);
+}
+
+void Unit::move_tile(TileData& tile)
+{
+	auto& pos = tile.worldPos;
+	m_controller->move_unit(pos);
+	if (m_controller->currentTile != nullptr)
+	{
+		m_controller->currentTile->unitID = NOT_OCCUPIED;
+	}
+
+	tile.unitID = m_controller->mesh.meshID;
+
+	//m_controller->currentTile = &tile;
+	m_controller->move_to_tile(&tile);
+	
+}
+
+void Unit::setPlayerID(GLuint id)
+{
+	playerID = id;
+	std::cout << "PLAYER ID: " << playerID << '\n';
+}
+
+int Unit::getPlayerID()
+{
+	return playerID;
 }
 
 

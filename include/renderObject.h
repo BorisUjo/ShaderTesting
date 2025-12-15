@@ -11,8 +11,10 @@ struct RenderObject
 	GLuint textureID = 0;
 
 	glm::vec3 position = glm::vec3(0,0,0);
+	glm::vec3 rotation = glm::vec3(0, 1, 0);
 
 	float scale = 1.0f;
+	float rotationAngle = 180.0f;
 
 	void test_initialise();
 	void initialise(MeshData& mesh);

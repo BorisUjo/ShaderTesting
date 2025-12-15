@@ -1,15 +1,14 @@
 #include <gameManager.h>
 #include <gameObject.h>
 #include <camera.h>
+
 void GameObject::OnEntityPressed()
 {
     auto& go = GameManager::getInstance();
-	
-    if (go.selectedUnit == nullptr)
-    {
-        return;
-    }
 
+
+
+    go.selectGameObject(this);
     go.selectGameObject(mesh.meshID);
 }
 
@@ -29,8 +28,7 @@ void GameObject::parseShader()
     model = glm::scale(model, glm::vec3(mesh.scale));
 
 	glUniformMatrix4fv(shader->getUniform("PVM"), 1, false, glm::value_ptr(camera->get_matrix() * model));
-
-	glUniform1i(shader->getUniform("tex0"),0);
+    glUniform1i(shader->getUniform("tex0"),0);
 	mesh.bind_texture();
 }
 
@@ -74,6 +72,18 @@ void GameObject::initialise()
 
 }
 
+void GameObject::initialise(MeshData& meshData, Shader& default, Shader& highlightShader, Texture& texture, float scale)
+{
+    mesh.initialise(meshData);
+    shader = &default;
+    this->highlightShader = &highlightShader;
+    mesh.assign_texture(texture);
+
+    mesh.scale = scale;
+
+
+}
+
 void GameObject::update()
 {
 }
@@ -83,18 +93,21 @@ void GameObject::render()
     Camera* camera = GameManager::getInstance().getMainCamera();
 
 
+    parseShader();
+    mesh.bind();
+
     // TODO: put this is a seperate function 
-    if (camera->selectedObjectID == mesh.meshID)
-    {
-        objectSelected = true;
-    }
-    else
-    {
-        objectSelected = false;
-        //glStencilMask(0x00);
-        parseShader();
-        mesh.bind();
-    }
+    //if (camera->selectedObjectID == mesh.meshID)
+    //{
+    //    objectSelected = true;
+    //}
+    //else
+    //{
+    //    objectSelected = false;
+    //    //glStencilMask(0x00);
+    //    parseShader();
+    //    mesh.bind();
+    //}
 }
 
 GameObject* GameObject::get()
@@ -107,7 +120,7 @@ void GameObject::setTag(std::string newTag)
     gameObjectTag = newTag;
 }
 
-void GameObject::highlight()
+void GameObject::highlight_stencil()
 {
 	glEnable(GL_DEPTH_TEST);
         glEnable(GL_STENCIL_TEST);
@@ -125,7 +138,7 @@ void GameObject::highlight()
         glEnable(GL_DEPTH_TEST);
 
         float originalScale = mesh.scale;
-        mesh.scale = originalScale * 1.05f; 
+        mesh.scale = originalScale * 1.025f; 
         parseHighlightShader();
         mesh.bind();
         mesh.scale = originalScale; 
@@ -133,4 +146,8 @@ void GameObject::highlight()
         glDepthMask(GL_TRUE);
         glStencilMask(0xFF);
         glDisable(GL_STENCIL_TEST);
+}
+
+void GameObject::highlight_color()
+{
 }

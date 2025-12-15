@@ -4,8 +4,6 @@
 #include <functional>
 #include <gameManager.h>
 
-extern struct KeyCode;
-
 
 enum InputMode
 {
@@ -13,32 +11,6 @@ enum InputMode
 	HELD
 };
 
-class InputManager
-{
-public:
-
-	void bindKey(int key, std::function<void()> action);
-	void bindKey(KeyCode key);
-	void bindMouseKey(KeyCode key);
-	void handleInput(GLFWwindow* window);
-	void handleMouseInput(GLFWwindow* window);
-	void unbindKeyCallback();
-
-private:
-	std::unordered_map<int, std::function<void()>> keyBindings;
-	std::unordered_map<int, KeyCode> keys;
-
-	std::unordered_map<int, KeyCode> mouseKeys;
-	int previousKeyState = -1;
-	int previousMouseKeyState = -1;
-
-	int previousHeldKey = -1;
-	int currentHeldKey = 0;
-
-	float maxHoldTime = 0.5f;
-	float currentHoldTime = 0.0f;
-
-};
 
 struct KeyCode
 {
@@ -57,4 +29,32 @@ struct KeyCode
 		this->callback = callback;
 		this->mode = mode;
 	}
+};
+
+class InputManager
+{
+public:
+
+	void bindKey(int key, std::function<void()> action);
+	void bindKey(KeyCode key);
+	void bindMouseKey(KeyCode key);
+	void handleInput(GLFWwindow* window);
+	void handleMouseInput(GLFWwindow* window);
+	void unbindKeyCallback();
+
+private:
+	std::unordered_map<int, std::function<void()>> keyBindings;
+
+	std::unordered_map<int, KeyCode> keys;
+	std::unordered_map<int, KeyCode> mouseKeys;
+
+	int previousKeyState = -1;
+	int previousMouseKeyState = -1;
+
+	int previousHeldKey = -1;
+	int currentHeldKey = 0;
+
+	float maxHoldTime = 0.5f;
+	float currentHoldTime = 0.0f;
+
 };

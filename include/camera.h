@@ -55,8 +55,12 @@ public:
 
 	Camera(float width, float height) : window_width(width), window_height(height)
 	{
-		Position = glm::vec3(12.981f, 30.3077f, 29.4453f);
-		Orientation = glm::vec3(0.0f, -0.60481f, -0.795468f);
+		//Position = glm::vec3(12.981f, 30.3077f, 29.4453f);
+		//Orientation = glm::vec3(0.0f, -0.60481f, -0.795468f);
+
+		Position = glm::vec3(50.882f, 49.7382f,  6.5838f);
+		Orientation = glm::vec3(-0.643032f, -0.764899f, -0.0007f);
+
 	}
 
 	

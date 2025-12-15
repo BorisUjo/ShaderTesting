@@ -1,7 +1,16 @@
 #include <meshInformation.h>
-
-void loadModelFromFile(const std::streamsize buffer_size, const char* file_path, MeshData& result)
+#include <gameManager.h>
+void loadModelFromFile(const std::streamsize buffer_size, const  char* file_path, MeshData& result)
 {
+
+    auto& gm = GameManager::getInstance();
+
+    if (gm.isModelLoaded(file_path))
+    {
+        result = gm.loadedModels[file_path];
+        std::cout << "[Model Load] Loaded from GameManager \n";
+        return;
+    }
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -124,13 +133,16 @@ void loadModelFromFile(const std::streamsize buffer_size, const char* file_path,
 
 	result.indicesSize = result.vertices.size();
 
+	
+    gm.loadedModels[file_path] = result;
+
+
 	auto end_time = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> duration = end_time - start_time;
 	std::cout << "[ Model Load Finished ] : "  << file_path << std::endl;
 	std::cout << "Elapsed time " << duration.count() << "s" << std::endl;
 	std::cout << "Vertex Count: " << result.vertices.size() << std::endl;
 
-	
 
 }
 

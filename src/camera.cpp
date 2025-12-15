@@ -6,13 +6,13 @@ GameObject* Camera::get_selected_object()
 
 	selectedObjectID = pixelInfo.objectID;
 
-	if (selectedObjectID == BACKGROUND_PIXELINFO)
+	if (selectedObjectID == BACKGROUND_PIXELINFO || selectedObjectID ==  -1)
 	{
 		return nullptr;
 	}
 
 	auto& gameManager = GameManager::getInstance();
-	auto* selectedObject = &gameManager.grabFromID(selectedObjectID);
+	auto* selectedObject = gameManager.grabFromID(selectedObjectID);
 
 	if (selectedObject == nullptr)
 	{
@@ -134,6 +134,13 @@ void Camera::input(GLFWwindow* window)
 		std::cout << Position.x << '\n';
 		std::cout << Position.y << '\n';
 		std::cout << Position.z << '\n';
+		std::cout << "Camera Rotation:" << '\n';
+		std::cout << Orientation.x << '\n';
+		std::cout << Orientation.y << '\n';
+		std::cout << Orientation.z << '\n';
+
+
+
 	}
 
 	// DEBUG TOOL ------------------------------------------------------------------>

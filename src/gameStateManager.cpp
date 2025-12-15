@@ -37,6 +37,13 @@ std::string GameStateManager::state_to_string()
 	}
 }
 
+void GameStateManager::get_game_state_values(float* current, float* max, float* min)
+{
+	*current = m_gameStateTimer;
+	*max = m_maxStateTime;
+	*min = 0.0f;
+}
+
 void GameStateManager::tick()
 {
 	m_gameStateTimer += GameManager::getInstance().deltaTime();
@@ -56,6 +63,8 @@ void GameStateManager::tick()
 		m_gameState = (GameState)m_gameStateCounter;
 		std::cout << "New state: " << state_to_string() << '\n';
 
+		m_gameStateTimer = 0.0f;
+
 		switch (m_gameState)
 		{
 		case GameStateIdle:
@@ -66,7 +75,6 @@ void GameStateManager::tick()
 			onBattleStateEntered();
 		}
 
-		m_gameStateTimer = 0.0f;
 	}
 
 }

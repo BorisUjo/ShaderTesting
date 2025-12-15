@@ -15,18 +15,23 @@ public:
 	bool objectSelected = false;
 
 public:
+	GameObject() = default;
 	virtual void OnEntityPressed();
 	virtual void OnEntityExit();
 	virtual void parseShader();
 	virtual void parseHighlightShader();
 	virtual void parsePickingShader(Shader& pickingShader);
 	virtual void initialise();
+	virtual void initialise(MeshData& meshData, Shader& default, Shader& highlightShader, Texture& texture, float scale = 1.0f);
 	virtual void update();
 	virtual void render();
-	virtual void highlight();
+	virtual void highlight_stencil();
+	virtual void highlight_color();
 	virtual GameObject* get();
 	void setTag(std::string newTag);
 
 	inline bool isSelected() { return objectSelected; }
 
 };
+
+

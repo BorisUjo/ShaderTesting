@@ -4,12 +4,18 @@
 #include <imgui.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_glfw.h>
+#include <imgui_internal.h>
 #define RESERVE_TILE_LENGTH 5
 #define STARTER_DATA 3
+#define MAP_WIDTH  11
+#define MAP_HEIGHT 11
 using json = nlohmann::json;
 
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UnitData, ID, name, health, attackShield, magicShield, attackDamage, magicDamage)
+
+void debug_preview_obj(GameObject* obj);
+
 
 std::ostream& operator<<(std::ostream& os, const glm::vec3 vec)
 {
@@ -103,7 +109,7 @@ std::vector<UnitData> Scene::generate_starter_units(std::vector<UnitData> data)
 
 	for (size_t i = 0; i < STARTER_DATA; i++)
 	{
-		int rnd = rand() % data.size();
+		int rnd = rand() % data.size();	
 		starterData.push_back(data[rnd]);
 	}
 
@@ -127,7 +133,7 @@ void Scene::debug_switch_game_state()
 void Scene::game_shopping_phase()
 {
 	auto& gameManager = GameManager::getInstance();
-
+	gameManager.view_unit_deployment(true);
 	for (size_t i = 0; i < SHOP_UNIT_COUNT; i++)
 	{
 		int rnd = rand() % gameManager.getUnits().size();
@@ -137,37 +143,42 @@ void Scene::game_shopping_phase()
 
 void Scene::game_battle_phase()
 {
-
+	auto& gm = GameManager::getInstance();
+	gm.view_unit_deployment(false);
 }
 
 void Scene::game_idle_phase()
 {
-	
+	auto& gm = GameManager::getInstance();
+
+	//gm.deployment();
+
 }
 
 void Scene::mouse_left_click(void)
 {
 	auto* selection = sceneCamera->get_selected_object();
+	auto& gameManager = GameManager::getInstance();
 
 	if (selection == nullptr)
 	{
 		return;
 	}
-	else if (GameObject* obj = dynamic_cast<GameObject*>(selection))
-	{	
-		obj->OnEntityPressed();
+
+	selection->OnEntityPressed();
+
+	if (UnitController* unit = dynamic_cast<UnitController*>(selection))
+	{
+		if (gameStateManager.GetGameState() == IDLE)
+		{
+			gameManager.view_unit_deployment(true);
+		}
 	}
-	
+
 }
 
 void Scene::mouse_right_click(void)
 {
-
-	if (gameStateManager.GetGameState() == GameStateManager::GameState::GameStateBattle)
-	{
-		return;
-	}
-
 	auto& gameManager = GameManager::getInstance();
 	auto* selection = sceneCamera->get_selected_object();
 
@@ -180,8 +191,14 @@ void Scene::mouse_right_click(void)
 	{
 		if (Tile* t = dynamic_cast<Tile*>(selection))
 		{
-			TileData& data = *t->tileData;
+			TileData* data = t->tileData;
 			gameManager.selectedUnit->move_to_tile(data);
+			if (gameStateManager.GetGameState() == IDLE)
+			{
+				gameManager.view_unit_deployment(false);
+			}
+			
+				
 			gameManager.selectedUnit = nullptr; // after move, "deselect" unit
 		}
 	}
@@ -222,55 +239,109 @@ void Scene::render_scene()
 			highlightTarget = objects[i];
 		}
 
-		objects[i]->render();
+		objects[i]->render();	
 
 	}
 
 	if (highlightTarget != nullptr)
 	{
-		highlightTarget->highlight();
+		 
 	}
 
 }
 
 void Scene::render_imgui()
 {
+
+	auto& gameManager = GameManager::getInstance();
+
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	bool show_demo_window = true;
-	bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	{
-		//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		ImGuiWindowFlags flags = 0;
+		flags |= ImGuiWindowFlags_NoMove;
+		flags |= ImGuiWindowFlags_NoResize;
+		flags |= ImGuiWindowFlags_NoCollapse;
 
 		// Each frame:
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 300, ImGui::GetIO().DisplaySize.y - 100), ImGuiCond_Always);
+		ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2) - 150, 0), ImGuiCond_Once);
 		ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Always);
 
-		ImGuiWindowFlags window_flags = 0;
-		window_flags |= ImGuiWindowFlags_NoResize;        // Disable resizing
-		window_flags |= ImGuiWindowFlags_NoMove;          // Disable manual moving
-		window_flags |= ImGuiWindowFlags_NoCollapse;      // Disable collapsing
-		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-		window_flags |= ImGuiWindowFlags_NoNavFocus;
+		float max, min, curr;
+		gameStateManager.get_game_state_values(&curr, &max, &min);
 
-		// Optional: remove title bar or decorations
-		// window_flags |= ImGuiWindowFlags_NoTitleBar;
+		ImGui::Begin("Game State",0,flags);
+		ImGui::Text("Current State: %s", gameStateManager.state_to_string());
+		ImGui::Text("Time to next state: %.2f", max - curr);
+		ImGui::ProgressBar((curr / max));
 
-		ImGui::Begin("End Turn", nullptr, window_flags);
-		if (ImGui::Button("Next Turn", ImVec2(280, 35)))
-		{
-			turnManager.end_turn();
-		}
 		ImGui::End();
 	}
 
 
-	
+	if (gameManager.selectedUnit != nullptr)
+	{
+		auto& selected = gameManager.selectedUnit;
+		preview_unit_information(selected);
+	}
+
 }
+
+void debug_preview_obj(GameObject* obj)
+{
+		//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+		// Each frame:
+		/*ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 200, ImGui::GetIO().DisplaySize.y - 100), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(500, 200), ImGuiCond_Always);*/
+
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 1164, ImGui::GetIO().DisplaySize.y - 200));
+
+		{
+			float newX = obj->mesh.position.x;
+			float newY = obj->mesh.position.y;
+			float newZ = obj->mesh.position.z;
+
+
+			ImGui::Begin("Object Properties");
+			if (ImGui::SliderFloat("X:", &newX, -30.0f, 30.0f) || ImGui::SliderFloat("Y:", &newY, -30.0f, 30.0f) || ImGui::SliderFloat("Z:", &newZ, -30.0f, 30.0f))
+			{
+				obj->mesh.position = glm::vec3(newX, newY, newZ);
+			}
+
+
+			if (ImGui::Button("Export"))
+			{
+
+			}
+
+
+			ImGui::End();
+		}
+}
+
+// should be called once, on entity press probably
+void Scene::preview_unit_information(UnitController* selected)
+{
+
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 1164, ImGui::GetIO().DisplaySize.y - 200));
+	ImGui::SetNextWindowSize(ImVec2(250, 300));
+	{
+		ImGui::Begin("Unit Information");
+
+		ImGui::Text("Name: %s", selected->unit->battleData.name);
+		ImGui::Text("Health: %d", selected->unit->battleData.health);
+		ImGui::Text("Physical Attack: %d", selected->unit->battleData.attackDamage);
+		ImGui::Text("Magic Attack: %d", selected->unit->battleData.magicDamage);
+
+		ImGui::End();
+	}
+}
+
 
 void Scene::picking_phase_render_scene()
 {
@@ -305,48 +376,43 @@ void Scene::initialise_camera(float width, float height)
 	gameManager.setMainCamera(sceneCamera);
 }
 
+void do_something()
+{
+	
+}
+
 bool Scene::initialise()
 {
-
-	// TO DO (1/10/2025 - 20/10/2025):
-	/*
-		- Spawn new units in the reserve section ( consider making tiles a gameobject)  [DONE]
-		- imGUI setup																	[DONE]
-		- setup new map																	[NOT DONE]
-		- gameobject better constructor													[NOT DONE]
-		- Implement turn based                  										[NOT DONE]
-		- Implement enemy ai                    										[NOT DONE]
-		- simple skybox																	[NOT DONE]
-		- Mock battle test																[NOT DONE]
-		- basic item setup																[NOT DONE]
-		- finalise game loop															[NOT DONE]
-	
-	*/
-
-
 	auto& gameManager = GameManager::getInstance();
 
 	const std::streamsize MODEL_LOAD_BUFFER_SIZE = 65536;
 	const unsigned int MAP_PLATFORM_SIZE = 64;
 
-	MeshData mapData;
-	MeshData tileData;
-	MeshData testDummyData;
+	m_player1.initialise(false);
+	m_player2.initialise();
 
-	MeshData mapDataTFT;
+	MeshData map_data;
+	MeshData dock_path_data;
+	MeshData dock_logs_data;
+	MeshData map_tile_data;
 
 	defaultShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/vertex.vert", RESOURCES_PATH "shaders/fragment.frag");
+	defaultUnitShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/defaultUnitVertex.vert", RESOURCES_PATH "shaders/defaultUnitFragment.frag");
 	pickingShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/pickingVertex.vert", RESOURCES_PATH "shaders/pickingFragment.frag");
 	highlightShader.loadShaderProgramFromFile(RESOURCES_PATH "shaders/highlight.vert", RESOURCES_PATH "shaders/highlight.frag");
 
-	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/Debug/ROMAN_BATTLEFIELD.obj", mapData);
-	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/Debug/TEST_DUMMY.obj", testDummyData);
-	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/Debug/tile.obj", tileData);
-	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/TFT/TEST_main_part_map_tft.obj", mapDataTFT);
+	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/TFT/TEST_main_part_map_tft.obj", map_data);
+	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/TFT/dock_path.obj", dock_path_data);
+	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/TFT/dock_log_pillars.obj", dock_logs_data);
+	loadModelFromFile(MODEL_LOAD_BUFFER_SIZE, RESOURCES_PATH "models/TFT/map_tile.obj", map_tile_data);
 
-	tileTexture.initialise(RESOURCES_PATH "textures/test.png");
-	dummyTexture.initialise(RESOURCES_PATH "textures/test1.png");
-	mapTexture.initialise(RESOURCES_PATH "textures/map_wip_bcolor.png");
+	mapTexture.initialise(RESOURCES_PATH "textures/map_wip_bcolor1.png");
+	dockPathTexture.initialise(RESOURCES_PATH "textures/test_bcolor.png");
+	dockLogsTexture.initialise(RESOURCES_PATH "textures/PILLAR_TEST_bcolor.png");
+	dummyTexture.initialise(RESOURCES_PATH "textures/PILLAR_TEST_bcolor.png");
+	//mapTileTexture.initialise(RESOURCES_PATH "textures/map_tile_bcolor.png");
+	mapTileTexture.initialise(RESOURCES_PATH "textures/tile_test.png");
+	
 
 	std::ifstream in_units(RESOURCES_PATH "json/units.json");
 	
@@ -356,40 +422,56 @@ bool Scene::initialise()
 
 	in_units.close();
 
-	initialise_map(tileData, &defaultShader);
-	initialise_reserve_tiles(tileData, &defaultShader, m_player1);
-
-	m_player1.initialise(false); // real player
-	m_player2.initialise(true); // terminator
-
 	gameManager.setHighlightShader(highlightShader);
+
 
 	// debug
 	//Unit test(gameManager.getUnits()[0], &defaultShader);
 
-	//auto& map = gameManager.instantiate<GameObject>();
-	//map.mesh.initialise(mapDataTFT);
-	//map.mesh.scale = 2.0f;
-	//map.shader = &defaultShader;
-	//map.highlightShader = gameManager.getHighlightShader();
-	//map.mesh.assign_texture(mapTexture);
+	auto& map = gameManager.instantiate<GameObject>();
+	auto& logs = gameManager.instantiate<GameObject>();
+	auto& dock = gameManager.instantiate<GameObject>();
+
+	map.initialise(map_data, defaultShader, highlightShader, mapTexture, 2.5f);
+	logs.initialise(dock_logs_data, defaultShader, highlightShader, dockLogsTexture, 2.5f);
+	dock.initialise(dock_path_data, defaultShader, highlightShader, dockPathTexture, 2.5f);
+	int tileIndex = 0;
+
+	const float offsetX = 20.230f;
+	const float offsetY = 15.384f;
+
+	// Generiraj tileset za mapu
+
+	for (size_t y = 0; y < 11; y++)
+	{
+		for (size_t x = 0; x < 11; x++)
+		{
+			
+
+			auto& tile = gameManager.instantiate<Tile>();
+			tile.initialise(map_tile_data, defaultShader, highlightShader, mapTileTexture, 2.0f);
+			float xPos = -(x * 3.0f) + offsetX;
+			float yPos = -(y * 3.0f) + offsetY;
+			auto& pos = glm::vec3(yPos, 1.0f, xPos);
+			m_tiles[tileIndex].initialise(x, y, pos);
+
+			tile.mesh.position = pos;
+			tile.tileData = &(m_tiles[tileIndex]);
+			tileIndex++;
+		}
+	}
+
+	initialise_reserve_tiles(map_tile_data, &defaultShader, m_player1);
+
+
+	gameStateManager.onIdleStateEntered = std::bind(&Scene::game_idle_phase, this);
+	gameStateManager.onBattleStateEntered = std::bind(&Scene::game_battle_phase, this);
+	gameStateManager.onShopStateEntered = std::bind(&Scene::game_shopping_phase, this);
+
+	m_player1.add_unit(gameManager.getUnits()[0], &defaultUnitShader, &dummyTexture);
 
 	// REFACTOR: to add a unit, player should only need the json data for the unit, a texture and shader manager should handle the rest based on the Unit ID; 
 	// Player.AddUnit() ---> handle initialising and dictionary lookup of texture/shader/mesh data
-	auto& startingDataP1 = generate_starter_units(gameManager.getUnits());
-	auto& startingDataP2 = generate_starter_units(gameManager.getUnits());
-
-	for (auto& unit : startingDataP1)
-	{
-		m_player1.add_unit(unit, &defaultShader, &dummyTexture);
-	}
-	for (auto& unit : startingDataP2)
-	{
-		m_player2.add_unit(unit, &defaultShader, &dummyTexture);
-	}
-
-
-
 	std::cout << "Scene Loaded Succesfully" << std::endl;
 	std::cout << "Render objects count:" << GameManager::getInstance().getRenderObjectCount() << std::endl;
 	return true;
@@ -411,7 +493,9 @@ void Scene::debug_input(GLFWwindow* window)
 
 void Scene::update()
 {
-	
+	auto& gm = GameManager::getInstance();
+	gm.tickManager.tick();
+	gameStateManager.tick();
 }
 
 
@@ -429,8 +513,6 @@ void Scene::initialise_map(MeshData& tileMesh, Shader* shader)
 {
 	unsigned int objCounter = 0;
 
-	float X_OFFSET = 0.0f;
-	float Y_OFFSET = 0.0f;
 
 	float X_STEP = 4.00f;
 	float Y_STEP = 4.00f;
@@ -443,8 +525,9 @@ void Scene::initialise_map(MeshData& tileMesh, Shader* shader)
 		{
 
 			Tile& go = gameManager.instantiate<Tile>();
-
-			glm::vec3 pos = glm::vec3((x * X_STEP) + X_OFFSET, 0, (-y * Y_STEP) + Y_OFFSET);
+			float xP = (float)(x * X_STEP);
+			float yP = (float)(-y * Y_STEP);
+			glm::vec3 pos = glm::vec3(yP, 0.0f, xP);
 
 			m_tiles[i].initialise(x, y, pos);
 
@@ -466,14 +549,10 @@ void Scene::initialise_reserve_tiles(MeshData& mesh, Shader* shader, Player& pla
 
 	for (int i = 0; i < RESERVE_TILE_LENGTH; i++)
 	{
-		glm::vec3 pos = glm::vec3(i * 4.0f, 0, 8.0f);
+		glm::vec3 pos = glm::vec3(22.5f, 1.5f, i * 4.0f);
 		auto& go = gameManager.instantiate<ReserveTile>();
-		go.mesh.initialise(mesh);
-		go.shader = shader;
-		go.highlightShader = gameManager.getHighlightShader();
+		go.initialise(mesh, defaultShader, highlightShader, mapTileTexture, 2.0f);
 		go.mesh.position = pos;
-		go.mesh.scale = 1.5f;
-		go.mesh.assign_texture(tileTexture);
 
 		player.add_reserve_tile(&go, i);
 	}

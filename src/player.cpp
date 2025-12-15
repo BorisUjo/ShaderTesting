@@ -10,22 +10,32 @@ void Player::add_unit(UnitData& data)
 
 }
 
-void Player::add_unit(UnitData& data, Shader* shader, Texture* texture)
+void Player::add_unit(const UnitData& data, Shader* shader, Texture* texture)
 {
-	auto& unit = Unit(data, shader, texture);
-	//unit.init_controller();
-	unit.move_to_reserve(find_available_reserve());
-	m_playerUnits.push_back(unit);
+	m_playerUnits.emplace_back(UnitData(data), shader, texture);
+	auto& unit = m_playerUnits.back();
+	unit.setPlayerID(playerID);
+	unit.init_controller();
+
+	if (auto* tile = find_available_reserve())
+	{
+		unit.move_to_reserve(*tile);
+		unit.get_controller().unitDeployed = false;
+	}
+
 }
 
-ReserveTile& Player::find_available_reserve()
+ReserveTile* Player::find_available_reserve()
 {
 	for (auto& tile : reserve)
 	{
 		if (!tile->occupied)
 		{
-			return *tile;
+			return tile;
 		}
 
 	}
+
+	return nullptr;
+
 }

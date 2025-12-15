@@ -13,18 +13,6 @@
 #include <reserveTile.h>
 #include <player.h>
 
-struct TurnManager
-{
-	bool isPlayerTurn = true;
-
-	void end_turn()
-	{
-		std::cout << "Ending turn \n";
-		isPlayerTurn = !isPlayerTurn;
-	}
-
-};
-
 class Scene
 {
 public:
@@ -50,10 +38,13 @@ public:
 	void mouse_left_click(void);
 	void mouse_right_click(void);
 
+
+
 private:
 	void initialise_map(MeshData& tileMesh, Shader* shader);
 	void initialise_reserve_tiles(MeshData& mesh, Shader* shader, Player& player);
 	void debug_write_unit_data_json();
+	void preview_unit_information(UnitController* selected);
 	std::vector<UnitData> generate_starter_units(std::vector<UnitData> data);
 
 public:
@@ -65,24 +56,27 @@ private:
 	int previous_key = 0; // use for reference on input system
 	
 	GameStateManager gameStateManager;
-	TurnManager turnManager;
-
 	RenderObject mapMesh;
 	RenderObject testDummy;
 
 	Shader defaultShader;
+	Shader defaultUnitShader;
 	Shader pickingShader;
 	Shader highlightShader;
 
 	Texture tileTexture;
 	Texture dummyTexture;
+
 	Texture mapTexture;
+	Texture dockLogsTexture;
+	Texture dockPathTexture;
+	Texture mapTileTexture;
 
 
 	float m_screenWidth = 0.0f;
 	float m_screenHeight = 0.0f;
 
-	TileData m_tiles[64];
+	TileData m_tiles[121];
 
 	// player 1 -> player
 	// player 2 -> NPC

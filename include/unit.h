@@ -14,25 +14,28 @@ struct UnitJsonData
 
 struct UnitData
 {
-	std::string ID;
-	std::string name;
-	std::string description;
+	std::string ID = "";
+	std::string name = "";
+	std::string description = "";
 
-	uint16_t health;
-	uint16_t attackShield;
-	uint16_t magicShield;
+	uint16_t health = 0;
+	uint16_t attackShield = 0;
+	uint16_t magicShield = 0;
 
-	uint16_t attackDamage;
-	uint16_t magicDamage;
+	uint16_t attackDamage = 0;
+	uint16_t magicDamage = 0;
 
 	uint16_t moveRange = 1;
 };
 
 class Unit
 {
+public:
+	int playerID = -1;
+
+	UnitData battleData;
 private:
 	UnitData m_baseData;
-	UnitData m_battleData;
 	UnitController* m_controller;
 	UnitInventory<3> m_unitInventory;
 
@@ -41,18 +44,23 @@ private:
 
 	bool reserveStatus = true; // is unit in reserve 
 
-	int get_health();
-	int get_attack_damage();
-	int get_move_range();
 
 public:
 	Unit(UnitData data); // obsolete
-	Unit(UnitData data, Shader* shader, Texture* texture);
+	Unit(const UnitData data, Shader* shader, Texture* texture);
 	~Unit();
 	void init_controller();
 	void set_reserve_status(bool status);
 	void refresh_stats();
 	void move_to_reserve(ReserveTile& tile);
+	void move_tile(TileData& tile);
+	void setPlayerID(GLuint id);
+
+	int getPlayerID();
+	int get_health();
+	int get_attack_damage();
+	int get_move_range();
+
 
 	virtual void cast_ultimate();
 
